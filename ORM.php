@@ -253,8 +253,11 @@
 
         public function __call($m, $args) {
             $method = '_'.$m;
-            call_user_func_array([ $this, $method ], $args);
-            return $this;
+            $return = call_user_func_array([ $this, $method ], $args);
+            if($return===null) {
+                return $this;
+            }
+            return $return;
         }
 
         protected function getPrimaryColumn() : string {
