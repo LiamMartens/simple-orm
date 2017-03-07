@@ -247,8 +247,11 @@
             $class = get_called_class();
             $obj = new $class();
             $method = '_'.$m;
-            call_user_func_array([ $obj, $method ] , $args);
-            return $obj;
+            $return = call_user_func_array([ $obj, $method ] , $args);
+            if($return===null) {
+                return $obj;
+            }
+            return $return;
         }
 
         public function __call($m, $args) {
@@ -280,13 +283,6 @@
                 return $class::$_tblname;
             }
             return (strtolower($class).'s');
-        }
-
-        /**
-        * Sets exists status
-        */
-        protected function exists() {
-            $this->_exists = true;
         }
 
         /**
@@ -359,8 +355,7 @@
             $records = self::query('SELECT '.$columns.' FROM '.$this->getTableName().' '.$this->getSQL(), $this->getValues())->fetchAll(PDO::FETCH_ASSOC);
             $entries = [];
             foreach($records as $r) {
-                $entr = new $class();
-                $entr->exists();
+                $entr = new $class(true);
                 foreach($r as $k => $v) {
                     $entr->properties->{$k} = $v;
                 }
@@ -427,7 +422,7 @@
                 $stmt = self::query($sql, $values);
                 if($stmt->rowCount()>0) {
                     // set last insert
-                    $this->exists();
+                    $this->_exists = true;
                     $this->properties->{$primary} = self::$_pdo->lastInsertId();
                 }
             }
