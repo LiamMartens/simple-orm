@@ -351,7 +351,7 @@
         * @return array(Model)
         */
         protected function _find() {
-            $class = new get_called_class();
+            $class = get_called_class();
             $columns = (empty($this->_columns)) ? '*' : DB::$columnChar.implode(DB::$columnChar.','.DB::$columnChar, $this->_columns).DB::$columnChar;
             $records = self::query('SELECT '.$columns.' FROM '.$this->getTableName().' '.$this->getSQL(), $this->getValues())->fetchAll(PDO::FETCH_ASSOC);
             $entries = [];
