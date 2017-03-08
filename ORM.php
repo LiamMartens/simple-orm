@@ -351,6 +351,18 @@
             $this->_limit = $n;
         }
 
+        protected function _count($as = false) {
+            $class = get_called_class();
+            $columns = (empty($this->_columns)) ? '*' : DB::$columnChar.implode(DB::$columnChar.','.DB::$columnChar, $this->_columns).DB::$columnChar;
+            $record = self::query('SELECT count('.$columns.') '.(($as!=false) ? 'AS '.DB::$columnChar.$as.DB::$columnChar:'').' FROM '.DB::$columnChar.$this->getTableName().DB::$columnChar.' '.$this->getSQL(), $this->getValues())->fetch(PDO::FETCH_ASSOC);
+            if(($as!==false)&&(isset($record[$as]))) {
+                return doubleval($record[$as]);
+            }
+            foreach($record as $k => $v) {
+                return doubleval($v);
+            }
+        }
+
         /**
         * Executes a select statement and finds records
         *
@@ -474,6 +486,7 @@
             return $values;
         }
     }
+
 
     /*DB::configure('mysql', [
         'dbname' => 'stackoverflow',
