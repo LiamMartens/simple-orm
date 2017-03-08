@@ -299,6 +299,13 @@
             }
         }
 
+        protected function _where($id) {
+            $key = ':'.md5(random_bytes(4));
+            $wg = new WhereGroup(WhereGroup::TYPE_AND, count($this->_whereGroups)==0);
+            $wg->andWhere(DB::$columnChar.$this->getPrimaryColumn().DB::$columnChar.'='.$key, [ $key => $id ]);
+            $this->_whereGroups[] = $wg;
+        }
+
         /**
         * Adds where group to the model query
         *
@@ -352,7 +359,7 @@
         protected function _find() {
             $class = get_called_class();
             $columns = (empty($this->_columns)) ? '*' : DB::$columnChar.implode(DB::$columnChar.','.DB::$columnChar, $this->_columns).DB::$columnChar;
-            $records = self::query('SELECT '.$columns.' FROM '.$this->getTableName().' '.$this->getSQL(), $this->getValues())->fetchAll(PDO::FETCH_ASSOC);
+            $records = self::query('SELECT '.$columns.' FROM '.DB::$columnChar.$this->getTableName().DB::$columnChar.' '.$this->getSQL(), $this->getValues())->fetchAll(PDO::FETCH_ASSOC);
             $entries = [];
             foreach($records as $r) {
                 $entr = new $class(true);
@@ -378,6 +385,17 @@
             return $entries[0];
         }
 
+        protected function _delete() {
+            $primary = $this->getPrimaryColumn();
+            if(!isset($this->properties->{$primary})&&$this->_exists) {
+                throw new Exception('No valid primary key column found');
+            }
+            $key = ':'.md5(random_bytes(4));
+            $sql = 'DELETE FROM '.DB::$columnChar.$this->getTableName().DB::$columnChar.' WHERE ';
+            $sql .= DB::$columnChar.$primary.DB::$columnChar.'='.$key;
+            self::query($sql, [ $key => $this->properties->{$primary} ]);
+        }
+
         /**
         * Saves an object
         */
@@ -389,7 +407,7 @@
             $values = [];
             if($this->_exists) {
                 // execute update statement instead of insert
-                $sql = 'UPDATE '.$this->getTableName().' SET ';
+                $sql = 'UPDATE '.DB::$columnChar.$this->getTableName().DB::$columnChar.' SET ';
                 $first = true;
                 foreach($this->properties as $k => $v) {
                     $key = ':'.md5(random_bytes(4));
@@ -404,7 +422,7 @@
                 self::query($sql, $values);
             } else {
                 // create new record
-                $sql = 'INSERT INTO '.$this->getTableName().' (';
+                $sql = 'INSERT INTO '.DB::$columnChar.$this->getTableName().DB::$columnChar.' (';
                 $vals = '(';
                 $first = true;
                 foreach($this->properties as $k => $v) {
